@@ -6,6 +6,7 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
+#include <sys/stat.h> // Для проверки директорий
 
 using namespace std;
 
@@ -13,6 +14,15 @@ using namespace std;
 bool isCommandAvailable(const string& command) {
     string commandCheck = "which " + command + " > /dev/null 2>&1";
     return system(commandCheck.c_str()) == 0;
+}
+
+// Функция для проверки, является ли путь директорией
+bool isDirectory(const string& path) {
+    struct stat st;
+    if (stat(path.c_str(), &st) == 0) {
+        return S_ISDIR(st.st_mode);
+    }
+    return false;
 }
 
 // Функция для установки plocate (если locate не найден)
@@ -31,13 +41,13 @@ vector<string> findFolders(const string& folderName) {
     string command;
 
     if (isCommandAvailable("locate")) {
-        command = "locate -r '.*" + folderName + "' 2>/dev/null";
+        command = "locate -r '" + folderName + "$' 2>/dev/null";
     } else if (isCommandAvailable("plocate")) {
-        command = "plocate -r '.*" + folderName + "' 2>/dev/null";
+        command = "plocate -r '" + folderName + "$' 2>/dev/null";
     } else {
         // Если ни locate, ни plocate нет, предложим установить plocate
         installPlocate();
-        command = "plocate -r '.*" + folderName + "' 2>/dev/null";
+        command = "plocate -r '" + folderName + "$' 2>/dev/null";
     }
 
     FILE* pipe = popen(command.c_str(), "r");
@@ -55,11 +65,27 @@ vector<string> findFolders(const string& folderName) {
 
         // Исключаем папки из кэша браузера и другие ненужные директории
         if (folderPath.find(".cache") == string::npos) {
-            foundFolders.push_back(folderPath);
+            // Проверяем, что путь ведет к директории, а не к файлу
+            if (isDirectory(folderPath)) {
+                foundFolders.push_back(folderPath);
+            }
         }
     }
 
-    pclose(pipe);
+    // Добавляем поиск архивов с таким именем
+    command = "locate -r '" + folderName + "\\.zip$' 2>/dev/null";
+    pipe = popen(command.c_str(), "r");
+    if (pipe) {
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            string zipPath(buffer);
+            if (!zipPath.empty() && zipPath.back() == '\n') {
+                zipPath.pop_back();
+            }
+            foundFolders.push_back(zipPath);
+        }
+        pclose(pipe);
+    }
+
     return foundFolders;
 }
 
