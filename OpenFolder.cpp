@@ -15,7 +15,7 @@ void openFolderMenu() {
     
     // Если ввод пустой, сообщаем об ошибке
     if (folderName.empty()) {
-        showMessage("Ошибка: имя папки не может быть пустым.");
+        showMessage("Ошибка: имя папки не может быть пустым.", 0);
         return;
     }
     
@@ -26,7 +26,7 @@ void openFolderMenu() {
     vector<string> foundFolders = findFolders(folderName);
 
     if (foundFolders.empty()) {
-        showMessage("Папка с таким названием не найдена.");
+        showMessage("Папка с таким названием не найдена.", 0);
     } else if (foundFolders.size() == 1) {
         cout << "Единственная найденная папка: " << foundFolders[0] << endl;
         cout << "Открываем папку..." << endl;
@@ -55,7 +55,7 @@ void openFolderMenu() {
             this_thread::sleep_for(chrono::seconds(3));
             clearScreen();
         } else {
-            showMessage("Некорректный выбор.");
+            showMessage("Некорректный выбор.", 0);
         }
     }
 }
