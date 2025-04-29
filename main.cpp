@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include <algorithm> // Make sure this is included for the remove function
+#include <algorithm>
 
 using namespace std;
 
@@ -48,7 +48,7 @@ vector<string> findFolders(const string& folderName) {
     char buffer[256];
     while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
         string folderPath(buffer);
-        // Убираем лишние символы новой строки - ИСПРАВЛЕНО:
+        // Убираем лишние символы новой строки
         if (!folderPath.empty() && folderPath.back() == '\n') {
             folderPath.pop_back();
         }
@@ -67,7 +67,8 @@ void openFolder(const string& folderPath) {
     #if defined(_WIN32) || defined(_WIN64)
         string command = "explorer \"" + folderPath + "\"";
     #else
-        string command = "xdg-open \"" + folderPath + "\"";
+        // Перенаправляем вывод в /dev/null, чтобы скрыть сообщения
+        string command = "xdg-open \"" + folderPath + "\" > /dev/null 2>&1 &";
     #endif
     system(command.c_str());
 }
@@ -102,35 +103,65 @@ int main() {
 
         switch (select) {
             case 1:
-#if defined(_WIN32) || defined(_WIN64)
+            #if defined(_WIN32) || defined(_WIN64)
                 system("start https://ya.ru");
-#else
+            #else
                 system("xdg-open https://ya.ru");
-#endif
+            #endif
                 cout << "Команда выполнена: Браузер открыт!" << endl;
+                
+                // Задержка перед очисткой экрана
+                this_thread::sleep_for(chrono::seconds(2));
+                
+                // Очищаем экран
+                #if defined(_WIN32) || defined(_WIN64)
+                    system("cls");
+                #else
+                    system("clear");
+                #endif
                 break;
 
             case 2:
-#if defined(_WIN32) || defined(_WIN64)
+            #if defined(_WIN32) || defined(_WIN64)
                 system("notepad");
-#else
+            #else
                 if (system("which gedit > /dev/null") == 0) {
                     system("gedit");
                 } else {
                     system("nano");
                 }
-#endif
+            #endif
                 cout << "Команда выполнена: Текстовый редактор открыт!" << endl;
+                
+                // Задержка перед очисткой экрана
+                this_thread::sleep_for(chrono::seconds(2));
+                
+                // Очищаем экран
+                #if defined(_WIN32) || defined(_WIN64)
+                    system("cls");
+                #else
+                    system("clear");
+                #endif
                 break;
 
             case 3:
-#if defined(_WIN32) || defined(_WIN64)
+            #if defined(_WIN32) || defined(_WIN64)
                 system("shutdown /r /t 5");
-#else
+            #else
                 cout << "Нужны root-права для перезагрузки. Введите пароль при запросе." << endl;
                 system("sudo shutdown -r +1");
-#endif
+            #endif
                 cout << "Команда выполнена: Перезагрузка компьютера..." << endl;
+                
+                // Задержка перед очисткой экрана
+                this_thread::sleep_for(chrono::seconds(5));
+                
+                // Очищаем экран
+                #if defined(_WIN32) || defined(_WIN64)
+                    system("cls");
+                #else
+                    system("clear");
+                #endif
                 break;
 
             case 4:
@@ -140,15 +171,58 @@ int main() {
             case 5: {
                 string folderName;
                 cout << "Введите название папки для поиска: ";
-                cin >> folderName;
-
+                cin.ignore(); // Очищаем входной буфер от предыдущего ввода
+                getline(cin, folderName); // Используем getline, чтобы считывать имя с пробелами
+                
+                // Если ввод пустой, сообщаем об ошибке
+                if (folderName.empty()) {
+                    cout << "Ошибка: имя папки не может быть пустым." << endl;
+                    this_thread::sleep_for(chrono::seconds(2));
+                    
+                    // Очищаем экран
+                    #if defined(_WIN32) || defined(_WIN64)
+                        system("cls");
+                    #else
+                        system("clear");
+                    #endif
+                    break;
+                }
+                
+                // Показываем пользователю, что идет поиск
+                cout << "Выполняется поиск папок \"" << folderName << "\"..." << endl;
+                
+                // Выполняем поиск папок без показа промежуточного процесса пользователю
+                cout << "Пожалуйста, подождите..." << endl;
                 vector<string> foundFolders = findFolders(folderName);
 
                 if (foundFolders.empty()) {
                     cout << "Папка с таким названием не найдена." << endl;
+                    
+                    // Задержка, чтобы пользователь смог прочитать сообщение
+                    this_thread::sleep_for(chrono::seconds(2));
+                    
+                    // Очищаем экран
+                    #if defined(_WIN32) || defined(_WIN64)
+                        system("cls");
+                    #else
+                        system("clear");
+                    #endif
                 } else if (foundFolders.size() == 1) {
                     cout << "Единственная найденная папка: " << foundFolders[0] << endl;
+                    cout << "Открываем папку..." << endl;
+                    
+                    // Открываем папку
                     openFolder(foundFolders[0]);
+                    
+                    // Даем пользователю время увидеть папку
+                    this_thread::sleep_for(chrono::seconds(3));
+                    
+                    // Очищаем экран
+                    #if defined(_WIN32) || defined(_WIN64)
+                        system("cls");
+                    #else
+                        system("clear");
+                    #endif
                 } else {
                     cout << "Найдено несколько папок с таким названием:" << endl;
                     for (size_t i = 0; i < foundFolders.size(); ++i) {
@@ -160,9 +234,30 @@ int main() {
                     cin >> choice;
 
                     if (choice > 0 && choice <= foundFolders.size()) {
+                        cout << "Открываем папку: " << foundFolders[choice - 1] << endl;
                         openFolder(foundFolders[choice - 1]);
+                        
+                        // Даем пользователю время увидеть папку
+                        this_thread::sleep_for(chrono::seconds(3));
+                        
+                        // Очищаем экран только после открытия папки
+                        #if defined(_WIN32) || defined(_WIN64)
+                            system("cls");
+                        #else
+                            system("clear");
+                        #endif
                     } else {
                         cout << "Некорректный выбор." << endl;
+                        
+                        // Даем пользователю время прочитать сообщение об ошибке
+                        this_thread::sleep_for(chrono::seconds(2));
+                        
+                        // Очищаем экран
+                        #if defined(_WIN32) || defined(_WIN64)
+                            system("cls");
+                        #else
+                            system("clear");
+                        #endif
                     }
                 }
                 break;
@@ -170,17 +265,17 @@ int main() {
 
             default:
                 cout << "Неверный выбор. Попробуйте снова." << endl;
+                
+                // Задержка перед очисткой экрана
+                this_thread::sleep_for(chrono::seconds(2));
+                
+                // Очищаем экран
+                #if defined(_WIN32) || defined(_WIN64)
+                    system("cls");
+                #else
+                    system("clear");
+                #endif
         }
-
-        // Задержка перед очисткой экрана и показом нового меню
-        this_thread::sleep_for(chrono::seconds(2));  // Пауза 2 секунды
-
-        // Очищаем экран в зависимости от ОС, только если папка была открыта
-        #if defined(_WIN32) || defined(_WIN64)
-            system("cls");
-        #else
-            system("clear");
-        #endif
     }
 
     return 0;
