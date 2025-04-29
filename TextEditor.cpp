@@ -1,12 +1,12 @@
 #include <cstdlib>
 #include "helper.h"
 
-void openBrowser() {
+void openTextEditor() {
     #if defined(_WIN32) || defined(_WIN64)
-        system("start https://ya.ru");
+        system("notepad");
     #else
-        system("xdg-open https://ya.ru");
+        system("gedit");
     #endif
     
-    showMessage("Команда выполнена: Браузер открыт!", 2);
+    showMessage("Команда выполнена: Текстовый редактор открыт!", 2);
 }

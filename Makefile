@@ -1,21 +1,33 @@
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall -Wextra
 
-SOURCES = main.cpp helpers.cpp menu.cpp OpenBrowser.cpp TextEditor.cpp \
+# Директории
+OBJ_DIR = bin/data
+BIN_DIR = bin
+
+# Создаем список исходных файлов, заменяя "OpenBrowser.cpp" на "openBrowser.cpp"
+SOURCES = main.cpp helpers.cpp menu.cpp openBrowser.cpp TextEditor.cpp \
           RestartComputer.cpp Exit.cpp FolderSearch.cpp OpenFolder.cpp
 
-OBJECTS = $(SOURCES:.cpp=.o)
-EXECUTABLE = computer_helper
+# Преобразуем исходники в объектные файлы в директории OBJ_DIR
+OBJECTS = $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(SOURCES))
+EXECUTABLE = $(BIN_DIR)/computer_helper
 
-all: $(EXECUTABLE)
+all: create_dirs $(EXECUTABLE)
+
+# Создание нужных директорий
+create_dirs:
+	mkdir -p $(OBJ_DIR)
+	mkdir -p $(BIN_DIR)
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-%.o: %.cpp helper.h
+# Компиляция cpp файлов в объектные файлы
+$(OBJ_DIR)/%.o: %.cpp helper.h
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE)
+	rm -rf $(OBJ_DIR) $(BIN_DIR)
 
-.PHONY: all clean
+.PHONY: all clean create_dirs

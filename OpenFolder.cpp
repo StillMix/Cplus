@@ -47,7 +47,8 @@ void openFolderMenu() {
         cout << "Выберите номер папки для открытия: ";
         cin >> choice;
 
-        if (choice > 0 && choice <= foundFolders.size()) {
+        // Исправляем предупреждение о сравнении разных типов
+        if (choice > 0 && static_cast<size_t>(choice) <= foundFolders.size()) {
             cout << "Открываем папку: " << foundFolders[choice - 1] << endl;
             openFolder(foundFolders[choice - 1]);
             
